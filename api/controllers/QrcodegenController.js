@@ -47,25 +47,81 @@ module.exports = {
     }
 
     // md5 encrypted then append to original code
+    // after combine md5 and string, insert into mongodb
     var md5 = require('md5');
     for(var k in codes) {
       codes[k] = md5(k) + k;
       Qrcodegen
-        .create({number:k,code:codes[k]})
+        .create(
+        {number:k, code:codes[k]})
         .exec(function createCB(err,created){
           if(err){
-            res.jsonx( {
-              code: 'E_EXSTING_QRCODE',
-              message: '二维码已经存在！'
-            });
+            console.log('err');
+            //res.jsonx();
           } else {
-            res.jsonx(created.name);
+            console.log('succ');
+            //res.jsonx()
           }
         });
     }
 
     //TODO: insert into table
+    res.send('RUN SUCC');
 
-  }
+  },
+
+  codeParser: function (req,res) {
+    var enCode = req.param('code');
+    var decrypter = require("crypto-js");
+    var salt = '1q2w3e4rABC';
+    try{
+       var code = decrypter.TripleDES.decrypt(enCode, salt);
+    }
+    catch(err){
+      res.json({success: false});
+    }
+    var result = '';
+
+    function hex2str() {
+      var hex = code.toString();
+      res.json({success: hex.length});
+      if (hex.length % 2) {
+        res.json({success:false});
+      }
+      for (var i = 0; i < hex.length; i+=2) {
+        result += String.fromCharCode(parseInt(hex.substr(i,2), 16));
+      }
+      return result;
+    }
+
+    //TODO: Check if the result exists in db, then return a flag
+
+    //var options = {
+    //  code: hex2str()
+    //};
+
+    //Qrcodegen.findOne(options, function(err, code) {
+    //  if (code === undefined) return res.notFound();
+    //  if (err) return next(err);
+    //  res.json({success: true});
+    //});
+
+
+
+    res.send(hex2str());
+  },
+
+
+
+  tester: function (req, res) {
+    var encrypter = require("crypto");
+    //var algorithm =
+    var code = '1234sad';
+    var salt = '1q2w3e4rABC';
+    var result = encrypter.TripleDES.encrypt(code, salt);
+
+    res.send(result.toString());
+  },
+
 };
 
