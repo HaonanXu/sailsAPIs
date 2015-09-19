@@ -49,14 +49,23 @@ module.exports = {
     // md5 encrypted then append to original code
     var md5 = require('md5');
     for(var k in codes) {
-      codes[k] = k + md5(k);
+      codes[k] = md5(k) + k;
+      Qrcodegen
+        .create({number:k,code:codes[k]})
+        .exec(function createCB(err,created){
+          if(err){
+            res.jsonx( {
+              code: 'E_EXSTING_QRCODE',
+              message: '二维码已经存在！'
+            });
+          } else {
+            res.jsonx(created.name);
+          }
+        });
     }
-
 
     //TODO: insert into table
 
-
-    return res.send(codes);
   }
 };
 

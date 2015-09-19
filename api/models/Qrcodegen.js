@@ -6,8 +6,22 @@
 */
 
 module.exports = {
-
+  schema: true,
   attributes: {
+    number: {
+      type: 'string',
+      required: true,
+      unique: true
+    },
+    code: {
+      type: 'string',
+      required: true,
+      unique: true
+    },
+    toJSON: function () {
+      var obj = this.toObject();
+      return obj;
+    }
 
   }
 };
