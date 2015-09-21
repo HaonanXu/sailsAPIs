@@ -56,7 +56,7 @@ module.exports = {
         {number:k, code:codes[k]})
         .exec(function createCB(err,created){
           if(err){
-            console.log('err');
+            console.log(err);
             //res.jsonx();
           } else {
             console.log('succ');
@@ -72,56 +72,29 @@ module.exports = {
 
   codeParser: function (req,res) {
     var enCode = req.param('code');
-    var decrypter = require("crypto-js");
-    var salt = '1q2w3e4rABC';
+    var decrypter = require("crypto");
+    var key = new Buffer("abcdefgh");
+    var iv = new Buffer([0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF]);
     try{
-       var code = decrypter.TripleDES.decrypt(enCode, salt);
+      var decipher = decrypter.createDecipheriv('des',key,iv);
+      var result = decipher.update(enCode,'hex','utf8');
+      result += decipher.final('utf8');
     }
     catch(err){
-      res.json({success: false});
+      res.json({failed: err.message});
     }
-    var result = '';
-
-    function hex2str() {
-      var hex = code.toString();
-      res.json({success: hex.length});
-      if (hex.length % 2) {
-        res.json({success:false});
-      }
-      for (var i = 0; i < hex.length; i+=2) {
-        result += String.fromCharCode(parseInt(hex.substr(i,2), 16));
-      }
-      return result;
-    }
-
     //TODO: Check if the result exists in db, then return a flag
 
-    //var options = {
-    //  code: hex2str()
-    //};
+    var options = {
+      code: result,
+    };
 
-    //Qrcodegen.findOne(options, function(err, code) {
-    //  if (code === undefined) return res.notFound();
-    //  if (err) return next(err);
-    //  res.json({success: true});
-    //});
+    Qrcodegen.findOne(options, function(err, code) {
+      if (code === undefined) return res.notFound();
+      if (err) return next(err);
+      res.json({success: true});
+    });
 
-
-
-    res.send(hex2str());
+    //res.json(result);
   },
-
-
-
-  tester: function (req, res) {
-    var encrypter = require("crypto");
-    //var algorithm =
-    var code = '1234sad';
-    var salt = '1q2w3e4rABC';
-    var result = encrypter.TripleDES.encrypt(code, salt);
-
-    res.send(result.toString());
-  },
-
 };
-
