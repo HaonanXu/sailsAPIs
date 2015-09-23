@@ -83,17 +83,40 @@ module.exports = {
     catch(err){
       res.json({failed: err.message});
     }
+
+    function codeSplit() {
+        var attributes = new Array();
+        attributes.push(result.substring(0,21));
+        attributes.push(result.substring(21,34));
+        attributes.push(result.substring(34,str.length));
+        return attributes;
+    }
+
+    var checkAtt = codeSplit();
     //TODO: Check if the result exists in db, then return a flag
 
-    //var options = {
-    //  code: result
-    //};
-    //
-    //Qrcodegen.findOne(options, function(err, code) {
-    //  if (code === undefined) res.json({err : 'undifined'});
-    //  if (err) res.json({failed : err.message});
-    //  res.json({success: "flag"});
-    //});
+    var options = {
+      code: checkAtt[0],
+      updated_at: new Date(Number(checkAtt[1])),
+      randNum: checkAtt[2]
+    };
+
+    CodeCheckLog.findOne(options, function(err, succ) {
+        // If cannot find code in this table, probably is a new used one,
+        // We need to insert this req into table
+        if (err) {
+            CodeCheckLog.create(
+                {code: }
+            );
+
+        }
+    });
+
+      //Qrcodegen.findOne(options, function(err, code) {
+      //    if (err) res.json({failed : err.message});
+      //    if (code === undefined) res.json({err : 'undifined'});
+      //    res.json({success: "flag"});
+      //});
 
     res.json(result);
   },
