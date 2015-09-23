@@ -85,16 +85,25 @@ module.exports = {
     }
     //TODO: Check if the result exists in db, then return a flag
 
-    var options = {
-      code: result,
-    };
+    //var options = {
+    //  code: result
+    //};
+    //
+    //Qrcodegen.findOne(options, function(err, code) {
+    //  if (code === undefined) res.json({err : 'undifined'});
+    //  if (err) res.json({failed : err.message});
+    //  res.json({success: "flag"});
+    //});
 
-    Qrcodegen.findOne(options, function(err, code) {
-      if (code === undefined) return res.notFound();
-      if (err) return next(err);
-      res.json({success: true});
-    });
-
-    //res.json(result);
+    res.json(result);
   },
+    tester: function (req, res) {
+        var cipher = require("crypto");
+        var key = new Buffer("abcdefgh");
+        var iv = new Buffer([0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF]);
+        var encrypter = cipher.createCipheriv('des',key,iv);
+        var result = encrypter.update("73ab9265507996e1d14b95c2af99f10a60922039733489292266",'utf8','hex');
+        result += encrypter.final('hex');
+        res.send(result);
+    }
 };
