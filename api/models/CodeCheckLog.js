@@ -11,20 +11,20 @@ module.exports = {
 
     attributes: {
         code: {
-            type: string,
+            type: 'string',
             required: true,
             unique: true
         },
         updated_at: {
-            type: date,
+            type: 'string',
             required: true
         },
         randNum: {
-            type: string,
+            type: 'string',
             required: true
         },
         times: {
-            type: integer,
+            type: 'integer',
             required: true
         },
         toJSON: function () {

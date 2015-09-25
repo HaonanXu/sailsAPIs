@@ -68,9 +68,11 @@ module.exports = {
 
     codeParser: function (req, res) {
         var enCode = req.param('code');
+        res.json(typeof(enCode));
         var decrypter = require("crypto");
-        var key = new Buffer("abcdefgh");
+        var key = new Buffer("12345678");
         var iv = new Buffer([0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF]);
+        res.json(enCode);
         try {
             var decipher = decrypter.createDecipheriv('des', key, iv);
             var result = decipher.update(enCode, 'hex', 'utf8');
@@ -80,17 +82,18 @@ module.exports = {
             res.json({failed: err.message});
         }
 
+
         function codeSplit() {
             var attributes = new Array();
 
             //Suppose 20 digits code
-            attributes.push(result.substring(0, 21));
+            attributes.push(result.substring(0, 52));
 
             //Date is set as 13 digits unix numbers
-            attributes.push(result.substring(21, 34));
+            attributes.push(result.substring(52, 65));
 
             //The rest is a random number
-            attributes.push(result.substring(34, str.length));
+            attributes.push(result.substring(65, result.length));
             return attributes;
         }
 
@@ -107,28 +110,33 @@ module.exports = {
 
             //TODO: We need a method to deal with attacks !!!
         }
-        CodeCheckLog.findOne(options, function (err, found) {
+        CodeCheckLog.findOne(options, function findOneCB(err, found) {
+
             // If cannot find code in this table, probably is a new used one,
             // We need to insert this req into table
             if (err) {
+                res.json({failed : err.message});
+            }
+            if (!found) {
+
                 CodeCheckLog.create(
                     {
                         code: checkAtt[0],
-                        updated_at: new Date(Number(checkAtt[1])),
+                        updated_at: checkAtt[1],
                         randNum: checkAtt[2],
                         times: 1
                     }
                 ).exec(function createCB(err) {
                         err ? res.json({Failed: "Create New Log Failed - ERR: " + err.message})
-                            : console.log("New Log Inserted");
+                            : res.json({succ : "New Log Inserted"});
                     });
 
             } else {
                 // Find same code exists in table already
                 // Need to check updated_at and randNum attributes
                 var reqTimeStamp = new Date((Number(checkAtt[1])));
-                var timeDiff = Math.abs(found.updated_at - reqTimeStamp)/1000;
-
+                var existTime = new Date(Number(found.updated_at));
+                var timeDiff = (reqTimeStamp - existTime) / 1000;
                 // If time stamp and random number are same
                 // Means the request is fake
                 if (timeDiff <= 1000 && checkAtt[2] == found.randNum) {
@@ -136,24 +144,26 @@ module.exports = {
                     //TODO: We need dealing with attacks !!!
                 } else {
                     var data = {
-                        updated_at: new Date(Number(checkAtt[1])),
+                        code: checkAtt[0],
+                        updated_at: checkAtt[1],
                         randNum: checkAtt[2],
                         times: found.times + 1
                     };
                     CodeCheckLog.update({code: checkAtt[0]}, data).exec(function (err) {
-                        if (err) res.json({Failed: "Update Log Err: " + err.message});
+                        err ? res.json({Failed: "Update Log Err: " + err.message}) :
+                            res.json({succ : "Code log updated"});
                     });
                 }
             }
         });
-
         //Qrcodegen.findOne(options, function(err, code) {
         //    if (err) res.json({failed : err.message});
         //    if (code === undefined) res.json({err : 'undifined'});
         //    res.json({success: "flag"});
         //});
 
-        res.json(result);
+        //res.json(result);
+
     },
     tester: function (req, res) {
         var cipher = require("crypto");
